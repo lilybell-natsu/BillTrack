@@ -6,9 +6,9 @@ const CATEGORIES = {
 };
 
 const UTILITY_TYPES = {
-  electricity: { label: '電気', icon: 'ti-bolt' },
-  gas: { label: 'ガス', icon: 'ti-flame' },
-  water: { label: '水道', icon: 'ti-droplet' },
+  electricity: { label: '電気', icon: 'ti-bolt', unit: 'kWh' },
+  gas: { label: 'ガス', icon: 'ti-flame', unit: '?' },
+  water: { label: '水道', icon: 'ti-droplet', unit: '?' },
 };
 
 let currentFilter = 'all';
@@ -50,6 +50,9 @@ function openAdd(presetCategory) {
   document.getElementById('f-due').value = '';
   document.getElementById('f-amount').value = '';
   document.getElementById('f-amount-month').value = '';
+  document.getElementById('f-usage').value = '';
+  document.getElementById('f-usage-period-start').value = '';
+  document.getElementById('f-usage-period-end').value = '';
   renderAddCategoryTabs(presetCategory || 'document');
   updateAddFormFields(presetCategory || 'document');
   showScreen('screen-add');
@@ -58,8 +61,9 @@ function openAdd(presetCategory) {
 
 function openAddForUtilityType() {
   openAdd('utility');
-  document.getElementById('f-amount-month').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('f-amount-month').value = new Date().toISOString().slice(0, 7);
   document.getElementById('f-utility-type').value = currentUtilityType;
+  updateUsageUnitLabel(currentUtilityType);
 }
 
 // ---------- 追加フォーム ----------
@@ -87,40 +91,63 @@ function updateAddFormFields(category) {
   const dateLabel = document.getElementById('f-date-label');
   const dueLabel = document.getElementById('f-due-label');
   const amountGroup = document.getElementById('f-amount-group');
+  const dateGroup = document.getElementById('f-date-group');
   const dueGroup = document.getElementById('f-due-group');
   const storeGroup = document.getElementById('f-store-group');
   const filesLabel = document.getElementById('f-files-label');
   const utilityTypeGroup = document.getElementById('f-utility-type-group');
+  const usageGroup = document.getElementById('f-usage-group');
+  const amountMonthGroup = document.getElementById('f-amount-month-group');
+  const usagePeriodGroup = document.getElementById('f-usage-period-group');
 
   if (category === 'document') {
     dateLabel.textContent = '契約日';
     dueLabel.textContent = '更新日(任意)';
+    dateGroup.style.display = 'block';
     amountGroup.style.display = 'none';
     dueGroup.style.display = 'block';
     storeGroup.style.display = 'block';
     utilityTypeGroup.style.display = 'none';
+    usageGroup.style.display = 'none';
+    amountMonthGroup.style.display = 'none';
+    usagePeriodGroup.style.display = 'none';
     filesLabel.textContent = '書類の写真・PDFを追加';
   } else if (category === 'warranty') {
     dateLabel.textContent = '購入日';
     dueLabel.textContent = '保証期限';
+    dateGroup.style.display = 'block';
     amountGroup.style.display = 'none';
     dueGroup.style.display = 'block';
     storeGroup.style.display = 'block';
     utilityTypeGroup.style.display = 'none';
+    usageGroup.style.display = 'none';
+    amountMonthGroup.style.display = 'none';
+    usagePeriodGroup.style.display = 'none';
     filesLabel.textContent = '保証書・取扱説明書の写真やPDFを追加(複数可)';
   } else if (category === 'utility') {
-    dateLabel.textContent = '契約日(任意)';
-    dueLabel.textContent = '';
+    dateGroup.style.display = 'none';
     amountGroup.style.display = 'block';
     dueGroup.style.display = 'none';
     storeGroup.style.display = 'none';
     utilityTypeGroup.style.display = 'block';
+    usageGroup.style.display = 'block';
+    amountMonthGroup.style.display = 'block';
+    usagePeriodGroup.style.display = 'block';
     filesLabel.textContent = '請求書の写真・PDFを追加(任意)';
+    updateUsageUnitLabel(document.getElementById('f-utility-type').value);
   }
+}
+
+function updateUsageUnitLabel(type) {
+  const unit = (UTILITY_TYPES[type] || UTILITY_TYPES.electricity).unit;
+  document.getElementById('f-usage-label').textContent = `使用量(${unit})`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('f-file-input').addEventListener('change', handleFileSelect);
+  document.getElementById('f-utility-type').addEventListener('change', (e) => {
+    updateUsageUnitLabel(e.target.value);
+  });
 });
 
 function handleFileSelect(e) {
@@ -168,14 +195,18 @@ async function saveItem() {
 
   if (category === 'utility') {
     const amount = parseInt(document.getElementById('f-amount').value, 10);
-    const month = document.getElementById('f-amount-month').value;
+    const month = document.getElementById('f-amount-month').value; // YYYY-MM (type="month")
     if (!amount || !month) {
-      showToast('金額と対象月を入力してください');
+      showToast('請求金額と請求年月を入力してください');
       return;
     }
+    const usageVal = document.getElementById('f-usage').value;
     item.utilityType = document.getElementById('f-utility-type').value;
-    item.month = month.slice(0, 7); // YYYY-MM
+    item.month = month;
     item.amount = amount;
+    item.usage = usageVal !== '' ? parseFloat(usageVal) : null;
+    item.usagePeriodStart = document.getElementById('f-usage-period-start').value || null;
+    item.usagePeriodEnd = document.getElementById('f-usage-period-end').value || null;
   }
 
   await db.putItem(item);
@@ -303,7 +334,7 @@ async function renderUtilityCard(type) {
     const diff = Math.round(((latest.amount - prev.amount) / prev.amount) * 100);
     diffText = `先月比 ${diff >= 0 ? '+' : ''}${diff}%`;
   } else if (latest) {
-    diffText = `今月 ¥${latest.amount.toLocaleString()}`;
+    diffText = `今月 \${latest.amount.toLocaleString()}`;
   }
 
   const bars = items.slice(-5).map(it => {
@@ -454,7 +485,7 @@ async function openUtility(type) {
   metrics.innerHTML = `
     <div class="metric-card">
       <p class="label">今月</p>
-      <p class="value">${latest ? '¥' + latest.amount.toLocaleString() : '-'}</p>
+      <p class="value">${latest ? '\' + latest.amount.toLocaleString() : '-'}</p>
     </div>
     <div class="metric-card">
       <p class="label">先月比</p>
@@ -478,10 +509,29 @@ async function openUtility(type) {
   }).join('') || '<p style="font-size:13px;color:var(--text-muted);padding:0 16px">まだ記録がありません。</p>';
 
   const history = document.getElementById('utility-history');
+  const unit = UTILITY_TYPES[type].unit;
   history.innerHTML = items.slice().reverse().map(it => {
     const [y, m] = it.month.split('-');
-    return `<div class="history-row"><span>${y}年${parseInt(m, 10)}月</span><span style="font-weight:600">¥${it.amount.toLocaleString()}</span></div>`;
+    const usageText = (it.usage !== null && it.usage !== undefined) ? `${it.usage}${unit}` : '';
+    const periodText = (it.usagePeriodStart && it.usagePeriodEnd)
+      ? `${formatDateShort(it.usagePeriodStart)}?${formatDateShort(it.usagePeriodEnd)}`
+      : '';
+    const subText = [usageText, periodText].filter(Boolean).join(' / ');
+    return `
+      <div class="history-row" style="flex-direction:column;align-items:stretch;gap:2px">
+        <div style="display:flex;justify-content:space-between">
+          <span>${y}年${parseInt(m, 10)}月</span>
+          <span style="font-weight:600">\${it.amount.toLocaleString()}</span>
+        </div>
+        ${subText ? `<span style="font-size:12px;color:var(--text-secondary)">${subText}</span>` : ''}
+      </div>`;
   }).join('') || '<p style="font-size:13px;color:var(--text-muted);padding:8px 16px">まだ記録がありません。</p>';
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${parseInt(m, 10)}/${parseInt(d, 10)}`;
 }
 
 // ---------- 設定画面 ----------
