@@ -7,8 +7,8 @@ const CATEGORIES = {
 
 const UTILITY_TYPES = {
   electricity: { label: '電気', icon: 'ti-bolt', unit: 'kWh' },
-  gas: { label: 'ガス', icon: 'ti-flame', unit: '?' },
-  water: { label: '水道', icon: 'ti-droplet', unit: '?' },
+  gas: { label: 'ガス', icon: 'ti-flame', unit: 'm3' },
+  water: { label: '水道', icon: 'ti-droplet', unit: 'm3' },
 };
 
 let currentFilter = 'all';
@@ -528,7 +528,7 @@ async function openUtility(type) {
     const [y, m] = it.month.split('-');
     const usageText = (it.usage !== null && it.usage !== undefined) ? `${it.usage}${unit}` : '';
     const periodText = (it.usagePeriodStart && it.usagePeriodEnd)
-      ? `${formatDateShort(it.usagePeriodStart)}?${formatDateShort(it.usagePeriodEnd)}`
+      ? `${formatDateShort(it.usagePeriodStart)} - ${formatDateShort(it.usagePeriodEnd)}`
       : '';
     const subText = [usageText, periodText].filter(Boolean).join(' / ');
     return `
