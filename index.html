@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f5f0">
+<title>お金・書類</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ホーム画面 -->
+  <section class="screen active" id="screen-home">
+    <div class="top-bar">
+      <div style="flex:1">
+        <h1>お金・書類</h1>
+        <p class="sub" id="home-summary">読み込み中...</p>
+      </div>
+      <button class="icon-btn" onclick="goSettings()"><i class="ti ti-settings"></i></button>
+    </div>
+    <div class="tabs" id="home-tabs"></div>
+    <div class="list" id="home-list"></div>
+  </section>
+
+  <!-- 追加画面 -->
+  <section class="screen" id="screen-add">
+    <div class="top-bar">
+      <button class="icon-btn" onclick="goHome()"><i class="ti ti-arrow-left"></i></button>
+      <h1>新規登録</h1>
+    </div>
+    <div class="tabs" id="add-category-tabs"></div>
+
+    <div class="form-group">
+      <label>名前</label>
+      <input type="text" id="f-name" placeholder="例: 冷蔵庫、賃貸契約書、電気代">
+    </div>
+
+    <div class="form-group" id="f-store-group">
+      <label>購入店・契約先(任意)</label>
+      <input type="text" id="f-store" placeholder="例: 山田電機">
+    </div>
+
+    <div class="form-group" id="f-date-group">
+      <label id="f-date-label">購入日・契約日</label>
+      <input type="date" id="f-date">
+    </div>
+
+    <div class="form-group" id="f-due-group">
+      <label id="f-due-label">保証期限・更新日</label>
+      <input type="date" id="f-due">
+    </div>
+
+    <div class="form-group" id="f-utility-type-group" style="display:none">
+      <label>種別</label>
+      <select id="f-utility-type">
+        <option value="electricity">電気</option>
+        <option value="gas">ガス</option>
+        <option value="water">水道</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="f-amount-group" style="display:none">
+      <label>今月の請求額(円)</label>
+      <input type="number" id="f-amount" placeholder="例: 9820">
+      <label style="margin-top:10px">対象月</label>
+      <input type="date" id="f-amount-month">
+    </div>
+
+    <div class="form-group">
+      <label id="f-files-label">写真・PDFを追加(保証書、取扱説明書など複数可)</label>
+      <div class="file-drop" onclick="document.getElementById('f-file-input').click()">
+        <i class="ti ti-upload" style="font-size:22px"></i><br>
+        タップして写真・PDFを選択
+      </div>
+      <input type="file" id="f-file-input" accept="image/*,application/pdf" multiple style="display:none">
+      <div id="f-file-list"></div>
+    </div>
+
+    <button class="btn-primary" onclick="saveItem()">保存する</button>
+  </section>
+
+  <!-- 詳細画面(書類・保証書共通) -->
+  <section class="screen" id="screen-detail">
+    <div class="top-bar">
+      <button class="icon-btn" onclick="goHome()"><i class="ti ti-arrow-left"></i></button>
+      <h1 id="detail-title">詳細</h1>
+    </div>
+    <div id="detail-body"></div>
+    <button class="btn-secondary" id="detail-delete-btn">
+      <i class="ti ti-trash"></i> 削除する
+    </button>
+  </section>
+
+  <!-- 公共料金 詳細・推移画面 -->
+  <section class="screen" id="screen-utility">
+    <div class="top-bar">
+      <button class="icon-btn" onclick="goHome()"><i class="ti ti-arrow-left"></i></button>
+      <h1>公共料金の推移</h1>
+    </div>
+    <div class="tabs" id="utility-type-tabs"></div>
+    <div class="metric-grid" id="utility-metrics"></div>
+    <div class="bar-chart" id="utility-chart"></div>
+    <p class="section-label">履歴</p>
+    <div id="utility-history"></div>
+    <button class="btn-primary" onclick="openAddForUtilityType()">
+      <i class="ti ti-plus"></i> 今月の請求額を追加
+    </button>
+  </section>
+
+  <!-- 設定画面 -->
+  <section class="screen" id="screen-settings">
+    <div class="top-bar">
+      <button class="icon-btn" onclick="goHome()"><i class="ti ti-arrow-left"></i></button>
+      <h1>設定</h1>
+    </div>
+    <div class="list">
+      <div class="card" style="cursor:default">
+        <div class="card-icon badge-accent"><i class="ti ti-database"></i></div>
+        <div class="card-body">
+          <p class="card-title" id="settings-count">登録件数: -</p>
+          <p class="card-sub">データはこの端末内(ブラウザ)にのみ保存されます</p>
+        </div>
+      </div>
+      <div class="card" onclick="exportData()">
+        <div class="card-icon badge-success"><i class="ti ti-download"></i></div>
+        <div class="card-body">
+          <p class="card-title">データをエクスポート</p>
+          <p class="card-sub">一覧をJSONファイルとして保存(ファイル本体は含みません)</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tab-bar">
+    <button class="tab-item active" id="tabbtn-home" onclick="goHome()">
+      <i class="ti ti-home ic"></i><span>ホーム</span>
+    </button>
+    <button class="tab-item" id="tabbtn-utility" onclick="goUtilityOverview()">
+      <i class="ti ti-chart-bar ic"></i><span>推移</span>
+    </button>
+    <button class="tab-item" id="tabbtn-add" onclick="openAdd()">
+      <i class="ti ti-plus ic"></i><span>追加</span>
+    </button>
+    <button class="tab-item" id="tabbtn-settings" onclick="goSettings()">
+      <i class="ti ti-settings ic"></i><span>設定</span>
+    </button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
