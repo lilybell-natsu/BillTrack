@@ -1,6 +1,6 @@
 {
-  "name": "お金・書類マネージャー",
-  "short_name": "お金・書類",
+  "name": "BillTrack",
+  "short_name": "BillTrack",
   "description": "契約書・保証書・取扱説明書・公共料金をまとめて管理するアプリ",
   "start_url": "./index.html",
   "scope": "./",
