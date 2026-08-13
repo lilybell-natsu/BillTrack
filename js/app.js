@@ -253,9 +253,23 @@ function dueBadge(days) {
 
 async function renderHome() {
   renderHomeTabs();
-  const items = await db.getAllItems();
   const listEl = document.getElementById('home-list');
   const summaryEl = document.getElementById('home-summary');
+
+  let items;
+  try {
+    items = await db.getAllItems();
+  } catch (err) {
+    console.error('データの読み込みに失敗しました', err);
+    summaryEl.textContent = 'データの読み込みに失敗しました';
+    listEl.innerHTML = `<div class="empty-state">
+      データを読み込めませんでした。<br>
+      Safariの「設定 → Safari → すべてのCookieをブロック」がオンになっていないか、<br>
+      プライベートブラウズモードで開いていないかご確認ください。<br><br>
+      <span style="font-size:11px;color:var(--text-muted)">${escapeHtml(String(err && err.message ? err.message : err))}</span>
+    </div>`;
+    return;
+  }
 
   let visible = items.filter(it => currentFilter === 'all' || it.category === currentFilter);
 
@@ -569,4 +583,8 @@ function showToast(msg) {
 }
 
 // 初期表示
-goHome();
+goHome().catch((err) => {
+  console.error('初期化に失敗しました', err);
+  const summaryEl = document.getElementById('home-summary');
+  if (summaryEl) summaryEl.textContent = '読み込みに失敗しました(' + (err && err.message ? err.message : err) + ')';
+});
