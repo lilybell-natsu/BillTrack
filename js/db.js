@@ -12,6 +12,18 @@ let dbInstance = null;
 function openDB() {
   if (dbInstance) return Promise.resolve(dbInstance);
   return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error('このブラウザ・モードではIndexedDBが利用できません'));
+      return;
+    }
+    let settled = false;
+    const timeoutId = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error('データベースを開くのに時間がかかりすぎています(他のタブでこのアプリが開いていないか確認してください)'));
+      }
+    }, 8000);
+
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
@@ -26,10 +38,24 @@ function openDB() {
       }
     };
     req.onsuccess = (e) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
       dbInstance = e.target.result;
       resolve(dbInstance);
     };
-    req.onerror = (e) => reject(e.target.error);
+    req.onerror = (e) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(e.target.error || new Error('データベースを開けませんでした'));
+    };
+    req.onblocked = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(new Error('他のタブでこのアプリが開いているため、データベースをブロックされました。他のタブを閉じてから再度お試しください'));
+    };
   });
 }
 
