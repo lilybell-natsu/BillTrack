@@ -1,4 +1,4 @@
-const CACHE_NAME = 'money-docs-tracker-v1';
+const CACHE_NAME = 'billtrack-v2';
 const ASSETS = [
   './',
   './index.html',
