@@ -1,4 +1,4 @@
-# お金・書類マネージャー
+# BillTrack
 
 契約書・重要書類、保証書+取扱説明書、公共料金の推移をまとめて管理するPWA(Progressive Web App)です。
 スマートフォンでの利用を第一に考えて設計しています。
@@ -18,19 +18,19 @@
 
 ## GitHub Pagesで公開する手順
 
-1. GitHubで新しいリポジトリを作成する(例: `money-docs-tracker`)
+1. GitHubで新しいリポジトリを作成する(例: `billtrack`)
 2. このフォルダの中身一式をリポジトリにpushする
    ```bash
    git init
    git add .
    git commit -m "Initial commit"
    git branch -M main
-   git remote add origin https://github.com/<あなたのユーザー名>/money-docs-tracker.git
+   git remote add origin https://github.com/<あなたのユーザー名>/billtrack.git
    git push -u origin main
    ```
 3. GitHubのリポジトリページで **Settings → Pages** を開く
 4. "Build and deployment" の Source を **Deploy from a branch** にし、Branch を `main` / `/(root)` に設定して保存
-5. 数分後に `https://<あなたのユーザー名>.github.io/money-docs-tracker/` で公開されます
+5. 数分後に `https://<あなたのユーザー名>.github.io/billtrack/` で公開されます
 6. iPhoneのSafariでそのURLを開き、共有ボタン → 「ホーム画面に追加」を選ぶとアプリのように使えます
 
 ## ローカルでの動作確認
@@ -38,7 +38,7 @@
 Service WorkerやIndexedDBはローカルファイル(`file://`)では正しく動かないため、簡易サーバーを立てて確認してください。
 
 ```bash
-cd money-docs-tracker
+cd billtrack
 python3 -m http.server 8000
 ```
 
